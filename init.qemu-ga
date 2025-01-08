@@ -1,0 +1,103 @@
+#!/sbin/sh
+
+#
+# Control Method for QEMU guest agent (/lib/svc/method/init.qrmu-ga)
+# Written by Yuri Voinov (C) 2025
+#
+# ident "@(#)qemu-ga.sh    2.5    25/01/08 YV"
+#
+. /lib/svc/share/smf_include.sh
+. /lib/svc/share/net_include.sh
+
+#############
+# Variables #
+#############
+
+# Base dir for installed QEMU-GA
+BASE_DIR="/usr/local"
+# TMP location
+TMP="/tmp"
+
+#
+# OS Commands location variables
+#
+CAT=`which cat`
+CUT=`which cut`
+ECHO=`which echo`
+KILL=`which kill`
+PGREP=`which pgrep`
+UNAME=`which uname`
+
+# QEMU-GA files paths
+QEMUGA_PATH="$BASE_DIR""/bin"
+# QEMU-GA files
+QEMUGA_BIN_FILE="qemu-ga"
+# QEMU ISA config
+QEMU_ISA="-m isa-serial -p /dev/term/a"
+
+# OS release
+OS_VER=`$UNAME -r|$CUT -f2 -d"."`
+OS_NAME=`$UNAME -s|$CUT -f1 -d" "`
+
+###############
+# Subroutines #
+###############
+
+check_os ()
+{
+ # Check OS version
+ if [ ! "$OS_NAME" = "SunOS" -a ! "$OS_VER" -lt "10" ]; then
+  $ECHO "ERROR: Unsupported OS $OS_NAME $OS_VER"
+  $ECHO "Exiting..."
+  exit 1
+ fi
+}
+
+startproc()
+{
+# Start QEMU-GA daemon
+ program=$1
+
+ $QEMUGA_PATH/$program $QEMU_ISA -d
+}
+
+stopproc()
+{
+# Stop QEMU-GA daemon
+ program=$1
+ $KILL `$PGREP $program`
+}
+
+##############
+# Main block #
+##############
+
+# Check OS version
+check_os
+
+# Check daemon installed
+if [ ! -f "$QEMUGA_PATH/$QEMUGA_BIN_FILE" -a ! -x "$QEMUGA_PATH/$QEMUGA_BIN_FILE" ]; then
+ $ECHO "ERROR: QEMU guest agent not found!"
+ $ECHO "Exiting..."
+ exit 1
+fi
+
+##########################################################
+
+case "$1" in
+"restart")
+  stopproc $QEMUGA_BIN_FILE
+  startproc $QEMUGA_BIN_FILE
+  ;;
+"start")
+  startproc $QEMUGA_BIN_FILE
+  ;;
+"stop")
+  stopproc $QEMUGA_BIN_FILE
+  ;;
+*)
+  $ECHO "Usage: $0 { start | stop | restart }"
+  exit 1
+esac
+
+exit 0
