@@ -106,7 +106,7 @@ $ECHO "Remove $PROGRAM_NAME SMF files..."
 if [ -f $SVC_MTD/$SCRIPT_NAME -a -f $SMF_DIR/$SMF_XML ]; then
  $RM -f $SVC_MTD/$SCRIPT_NAME
 
- $SVCCFG delete -f svc:/network/$SERVICE_NAME:default>/dev/null 2>&1
+ $SVCCFG delete -f svc:/site/$SERVICE_NAME:default>/dev/null 2>&1
  $RM $SMF_DIR/$SMF_XML
 else
  $ECHO "ERROR: $PROGRAM_NAME SMF service files not found. Exiting..."
